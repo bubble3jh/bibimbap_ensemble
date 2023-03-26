@@ -29,13 +29,8 @@ criterion = nn.BCEWithLogitsLoss(reduction = "none")
 from rdkit import Chem
 
 class SaveBestModel:
-    """
-    Class to save the best model while training. If the current epoch's 
-    validation loss is less than the previous least less, then save the
-    model state.
-    """
     def __init__(
-        self, best_valid_loss= 0 #float('inf')
+        self, best_valid_loss= 0 
     ):
         self.best_valid_loss = best_valid_loss
         self.best_test_loss = 0
@@ -48,13 +43,13 @@ class SaveBestModel:
         if current_valid_loss > self.best_valid_loss:
             self.best_valid_loss = current_valid_loss
             self.best_test_loss = current_test_loss
-            print(f"\nBest validation loss: {self.best_valid_loss}")
-            print(f"\nSaving best model for epoch: {epoch+1}\n")
+            print(f"\nBest validation : {self.best_valid_loss}")
+            print(f"\nSaving best model for epoch: {epoch}\n")
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': criterion,
+                'auc': criterion,
                 }, f'{fname}/best_model.pth')
 
 def train(args, model, device, loader, optimizer):
@@ -73,8 +68,6 @@ def train(args, model, device, loader, optimizer):
             
         optimizer.zero_grad()
         loss = torch.sum(loss_mat)/torch.sum(is_valid)
-        if not args.freeze_model:
-            loss.backward()
 
         optimizer.step()
 
@@ -97,14 +90,6 @@ def eval(args, model, device, loader, fname):
     y_scores = torch.cat(y_scores, dim = 0).cpu().numpy()
     probs = torch.sign(torch.from_numpy(y_scores)).numpy()
     roc_list = []
-    os.makedirs(fname, exist_ok=True)
-    with open(fname + '/errorcase', 'w') as output_file:
-        for i in range(len(y_true)):
-            output_file.write(str(y_true[i]) + ' ')
-            output_file.write(str(probs[i]) + ' ')
-            output_file.write(str(probs[i]==y_true[i]) + ' ')
-            # output_file.write(str(y_scores[i]) + ' ')
-            output_file.write(smiles[i] + '\n')
     
     for i in range(y_true.shape[1]):
         #AUC is only defined when there is at least one positive data.
@@ -114,20 +99,20 @@ def eval(args, model, device, loader, fname):
     if len(roc_list) < y_true.shape[1]:
         print("Some target is missing!")
         print("Missing ratio: %f" %(1 - float(len(roc_list))/y_true.shape[1]))
-    # print(roc_list) # task 끼리의 ROC 평균내서 성능측정
     return sum(roc_list)/len(roc_list) #y_true.shape[1]
 
-def model_recycling(model, averaging_target, averaging_aux ,model_ver, model_weight):
+def model_bibimbap(model, averaging_target, averaging_aux ,model_ver, model_weight):
     checkpoints=[]
+    #auxiliary model
     for aux in averaging_aux:
-        print(aux)
+        #for ensembling bunch of auxiliary models, we made rule for args.filename and load the saved model that we need
+        #you should write specific path with your work directory
         if model_ver.endswith("nfr"):
-            checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/non_freeze_bn/target_{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
+            checkpoints.append(torch.load(f'INPUT_PATH_HERE/{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
         else:
-            checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/freeze_bn/target_{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
+            checkpoints.append(torch.load(f'INPUT_PATH_HERE/target_{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
     #target model 
-    # checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/freeze_bn/{averaging_target}_500/best_model.pth')['model_state_dict'])
-    checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/0215exp/_{averaging_target}_fbn{averaging_target}_lpft_500/best_model.pth')['model_state_dict'])
+    checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/freeze_bn/{averaging_target}_500/best_model.pth')['model_state_dict'])
     temp = dict.fromkeys(checkpoints[0].keys(),0)
     
     for i, checkpoint in enumerate(checkpoints):
@@ -139,8 +124,9 @@ softmax= torch.nn.Softmax(dim=0)
 
 def set_seed_all(seed):
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+        torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     np.random.seed(seed)
@@ -180,32 +166,26 @@ def main():
     parser.add_argument('--split', type = str, default="scaffold", help = "random or scaffold or random_scaffold")
     parser.add_argument('--eval_train', action= 'store_true', help='evaluating training or not')
     parser.add_argument('--num_workers', type=int, default = 4, help='number of workers for dataset loading')
-    parser.add_argument('--replace_classifier', default='', type=str)   
-    parser.add_argument('--averaging_target', default='', type=str)   
-    parser.add_argument('--averaging_aux', type=str, nargs='+') 
+    parser.add_argument('--replace_classifier', default='', type=str)    
+    parser.add_argument('--averaging_aux', default='', type=str, nargs='+') 
     parser.add_argument('--z_tensor', type=float, nargs='+') 
     parser.add_argument('--freeze_gnn', action= 'store_true', help='freeze featurizer')
     parser.add_argument('--freeze_lc', action= 'store_true', help='freeze lc')
     parser.add_argument('--freeze_bn', action= 'store_true', help='freeze bn')
-    parser.add_argument('--freeze_model', action= 'store_true', help='freeze model')
     parser.add_argument('--model_ver', default='', type=str)   
-    parser.add_argument('--ensemble_method', default='average', type=str) 
+    parser.add_argument('--ensemble_method', default='uniform',type=str, help='ensemble method, from Uniform averaging or Dirichelt sampling') 
     model_weight=0
     args = parser.parse_args()
     save_best_model = SaveBestModel()
     set_seed_all(args.runseed)
-    torch.manual_seed(args.runseed)
-    np.random.seed(args.runseed)
     device = torch.device("cuda:" + str(args.device)) if torch.cuda.is_available() else torch.device("cpu")
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(args.runseed)
     
     #Bunch of classification tasks
     if args.dataset == "tox21":
         num_tasks = 12
     elif args.dataset == "hiv":
         num_tasks = 1
-    elif args.dataset == "pcba": # 제외
+    elif args.dataset == "pcba": 
         num_tasks = 128
     elif args.dataset == "muv":
         num_tasks = 17
@@ -247,12 +227,6 @@ def main():
     val_loader = DataLoader(valid_dataset, batch_size=args.batch_size, shuffle=False, num_workers = args.num_workers)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers = args.num_workers)
     
-    # mol=graph_data_obj_to_mol_simple(test_loader.dataset[0].x, test_loader.dataset[0].edge_index, test_loader.dataset[0].edge_attr)
-    # smiles=Chem.MolToSmiles(mol)
-    # print(smiles)
-    # print(test_loader.dataset[0].x.shape)
-    # print(test_loader.dataset[0].edge_index.shape)
-    # print(test_loader.dataset[0].edge_attr.shape)
     #set up model
     model = GNN_graphpred(args.num_layer, args.emb_dim, num_tasks, JK = args.JK, drop_ratio = args.dropout_ratio, graph_pooling = args.graph_pooling, gnn_type = args.gnn_type)
 
@@ -268,22 +242,27 @@ def main():
             model.gnn.load_state_dict(gnn_pt)
             model.graph_pred_linear.load_state_dict(lnr_pt)
         else:
-            # model.from_pretrained(args.input_model_file) #first finetuning
+            #first finetuning for pre-trained model
+            # model.from_pretrained(args.input_model_file) 
+
+            #loading model from Save_best_model function
             model.load_state_dict(torch.load(args.input_model_file)) #best model
-    if not args.averaging_target == "":
-        if args.ensemble_method=="average":
+    if not args.averaging_aux == "":
+        if args.ensemble_method=="uniform":
+            # model weight qeual 1/|M| 
             model_z = torch.ones(len(args.averaging_aux)+1, requires_grad = False)
             model_weight = softmax(model_z)
-        elif args.z_tensor == None:
-            d = Dirichlet(torch.ones(len(args.averaging_aux)+1))
+        elif args.ensemble_method=="dirichlet" and args.z_tensor == None:
+            # model weight sampled from Dirichlet distribution
+            alpha = Dirichlet(torch.ones(len(args.averaging_aux)+1))
             torch.random.seed()
-            model_weight = d.sample()
+            model_weight = alpha.sample()
             torch.manual_seed(args.runseed)
         else:
+            # manualy weights models
             model_weight = torch.tensor(args.z_tensor)
-            print('model_weight : ')
-            print(model_weight)
-        model_recycling(model, args.averaging_target, args.averaging_aux ,args.model_ver, model_weight)
+            print('model_weight : ', model_weight)
+        model_bibimbap(model, args.dataset, args.averaging_aux ,args.model_ver, model_weight)
 
     if args.freeze_bn:
         for param in model.gnn.batch_norms.parameters():
@@ -294,13 +273,11 @@ def main():
     #set up optimizer
     #different learning rate for different part of GNN
     model_param_group = []
-    if not args.freeze_gnn:
-        model_param_group.append({"params": model.gnn.parameters()})
+
     if args.graph_pooling == "attention":
         model_param_group.append({"params": model.pool.parameters(), "lr":args.lr*args.lr_scale})
-    # if not args.ensemble_method == "average":
-    if not args.averaging_target == "":
-        model_param_group.append({"params": model_weight})
+    if not args.freeze_gnn:
+        model_param_group.append({"params": model.gnn.parameters()})
     if not args.freeze_lc:
         model_param_group.append({"params": model.graph_pred_linear.parameters(), "lr":args.lr*args.lr_scale})
     optimizer = optim.Adam(model_param_group, lr=args.lr, weight_decay=args.decay)
@@ -324,7 +301,7 @@ def main():
     if args.averaging_target:
         args.filename =  "recycling" + args.filename 
 
-    fname = 'runs/finetune_cls_runseed' + str(args.runseed) + '/'+ "errorcase/" + args.filename + "_" + str(args.epochs)
+    fname = 'runs/finetune_cls_runseed' + str(args.runseed) + '/' + args.filename + "_" + str(args.epochs)
     if not args.ensemble_method=="average":
         fname = fname + "_" + str(model_weight[0].item())
     print(f"saving model to : [{fname}]")
@@ -335,13 +312,8 @@ def main():
     writer = SummaryWriter(fname)
     for epoch in range(1, args.epochs+1):
         print("====epoch " + str(epoch))
-        if args.freeze_model:
-            with torch.no_grad():
-                train(args, model, device, train_loader, optimizer)
-            # print("freezed")
-        else:
-            print("training")
-            train(args, model, device, train_loader, optimizer)
+        print("training")
+        train(args, model, device, train_loader, optimizer)
         print("====Evaluation")
         if args.eval_train:
             train_acc = eval(args, model, device, train_loader, fname+"/train")
