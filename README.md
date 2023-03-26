@@ -57,7 +57,7 @@ python3 finetune.py --input_model_file FINETUNED_MODEL_PATH --replace_classifier
 
 At this stage, you can also use `--freeze_bn` to decide whether to learn or not.
 Also, for ease of experimentation, we used the following form of OUTPUT_FILENAME. `target_${target}_aux_${aux}_${model_ver}`
-For ${target}, we wrote the name of the target dataset, for ${aux}, the name of the auxiliary dataset, and ${model_ver} the string such as 'fr_nfr', which summarizes whether the model was trained by running freeze_bn in the previous step and the current step.
+For \${target}, we wrote the name of the target dataset, for \${aux}, the name of the auxiliary dataset, and \${model_ver} the string such as 'fr_nfr', which summarizes whether the model was trained by running freeze_bn in the previous step and the current step.
 
 #### 4. Ensemble and final fine-tune
 ```
