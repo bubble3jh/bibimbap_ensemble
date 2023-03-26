@@ -168,7 +168,7 @@ def main():
     parser.add_argument('--num_workers', type=int, default = 4, help='number of workers for dataset loading')
     parser.add_argument('--replace_classifier', default='', type=str)    
     parser.add_argument('--averaging_aux', default='', type=str, nargs='+') 
-    parser.add_argument('--z_tensor', type=float, nargs='+') 
+    parser.add_argument('--ens_weight', type=float, nargs='+') 
     parser.add_argument('--freeze_gnn', action= 'store_true', help='freeze featurizer')
     parser.add_argument('--freeze_lc', action= 'store_true', help='freeze lc')
     parser.add_argument('--freeze_bn', action= 'store_true', help='freeze bn')
@@ -252,7 +252,7 @@ def main():
             # model weight qeual 1/|M| 
             model_z = torch.ones(len(args.averaging_aux)+1, requires_grad = False)
             model_weight = softmax(model_z)
-        elif args.ensemble_method=="dirichlet" and args.z_tensor == None:
+        elif args.ensemble_method=="dirichlet" and args.ens_weight == None:
             # model weight sampled from Dirichlet distribution
             alpha = Dirichlet(torch.ones(len(args.averaging_aux)+1))
             torch.random.seed()
@@ -260,7 +260,7 @@ def main():
             torch.manual_seed(args.runseed)
         else:
             # manualy weights models
-            model_weight = torch.tensor(args.z_tensor)
+            model_weight = torch.tensor(args.ens_weight)
             print('model_weight : ', model_weight)
         model_bibimbap(model, args.dataset, args.averaging_aux ,args.model_ver, model_weight)
 
