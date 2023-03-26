@@ -31,33 +31,39 @@ All the necessary data files can be downloaded from the following links.
 download from [chem data](http://snap.stanford.edu/gnn-pretrain/data/chem_dataset.zip) (2.5GB), unzip it, and put it under `dataset/`.
 
 ## Model Bibimbap strategy
-In each directory, we have three kinds of files used to train GNNs.
+Model Bibimbap ensembles fine-tuned models in three steps.
 
-#### 1. Self-supervised pre-training
-```
-python pretrain_contextpred.py --output_model_file OUTPUT_MODEL_PATH
-python pretrain_masking.py --output_model_file OUTPUT_MODEL_PATH
-python pretrain_edgepred.py --output_model_file OUTPUT_MODEL_PATH
-python pretrain_deepgraphinfomax.py --output_model_file OUTPUT_MODEL_PATH
-```
 #### 1. Load pre-trained model and fine-tune
-Under 'model_gin/', there are pre-trained models that are trained in different ways. 
-This will save the resulting pre-trained model to `OUTPUT_MODEL_PATH`.
+Under 'model_gin/', there are pre-trained models that are trained in different ways. In INPUT_MODEL_PATH, put the path to the selected model.
 
-#### 2. Supervised pre-training
 ```
-python pretrain_supervised.py --output_model_file OUTPUT_MODEL_PATH --input_model_file INPUT_MODEL_PATH
+python finetune.py --input_model_file PRETRAINED_MODEL_PATH --filename OUTPUT_FILENAME --dataset DATASET --epochs EPOCHS
 ```
-This will load the pre-trained model in `INPUT_MODEL_PATH`, further pre-train it using supervised pre-training, and then save the resulting pre-trained model to `OUTPUT_MODEL_PATH`.
 
-#### 3. Fine-tuning
-```
-python finetune.py --model_file INPUT_MODEL_PATH --dataset DOWNSTREAM_DATASET --filename OUTPUT_FILE_PATH
-```
-This will finetune pre-trained model specified in `INPUT_MODEL_PATH` using dataset `DOWNSTREAM_DATASET.` The result of fine-tuning will be saved to `OUTPUT_FILE_PATH.`
+We can give as a hyperparameter whether to freeze the batch normalization layer when training the model with `--freeze_bn`.
+This step creates a vanilla fine-tuned model from the pretrained model for each datasets.
 
-## Saved pre-trained models
-We release pre-trained models in `model_gin/` and `model_architecture/` for both biology (`bio/`) and chemistry (`chem/`) applications. Feel free to take the models and use them in your applications!
+#### 2. Linear probing for target dataset
+```
+python finetune.py --input_model_file PRETRAINED_MODEL_PATH --filename OUTPUT_FILENAME --dataset DATASET --epochs EPOCHS --freeze_gnn
+```
+In this step, load the pre-trained model in `PRETRAINED_MODEL_PATH` further we run linear probing on the target dataset to obtain weights to replace the linear classifier in the auxiliary model.
 
-## Reproducing results in the paper
-Our results in the paper can be reproduced by running `sh finetune_tune.sh SEED DEVICE`, where `SEED` is a random seed ranging from 0 to 9, and `DEVICE` specifies the GPU ID to run the script. This script will finetune our saved pre-trained models on each downstream dataset.
+#### 3. Auxiliary fine-tune
+```
+python3 finetune.py --input_model_file FINETUNED_MODEL_PATH --replace_classifier LP_MODEL_PATH --dataset DATASET --filename OUTPUT_FILENAME --epochs EPOCHS 
+
+```
+
+At this stage, you can also use `--freeze_bn` to decide whether to learn or not.
+Also, for ease of experimentation, we used the following form of OUTPUT_FILENAME. `target_${target}_aux_${aux}_${model_ver}`
+For ${target}, we wrote the name of the target dataset, for ${aux}, the name of the auxiliary dataset, and ${model_ver} the string such as 'fr_nfr', which summarizes whether the model was trained by running freeze_bn in the previous step and the current step.
+
+#### 4. Ensemble and final fine-tune
+```
+python finetune.py --averaging_target DATASET --dataset DATASET --averaging_aux AUX_MODELS --epochs EPOCHS --model_ver MODEL_VER
+```
+
+`DATASET` should be target dataset, and `AUX_MODELS` should be auxiliary model's names. We added `model_ver` argument parameter for find auxiliary model's directory more easier.
+At this stage, we tried a combination of `--freeze_gnn` freezing the features, `--freeze_lc` freezing the classifier, and `--freeze_bn` to find a best performing model for each dataset with hyperparameter tuning.
+
