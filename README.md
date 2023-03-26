@@ -1,42 +1,34 @@
-# Strategies for Pre-training Graph Neural Networks
+# Model Bibimbap Ensemble Framework
 
 This is a Pytorch implementation of the following paper: 
 
-Weihua Hu*, Bowen Liu*, Joseph Gomes, Marinka Zitnik, Percy Liang, Vijay Pande, Jure Leskovec. Strategies for Pre-training Graph Neural Networks. ICLR 2020.
-[arXiv](https://arxiv.org/abs/1905.12265) [OpenReview](https://openreview.net/forum?id=HJlWWJSFDH) 
+Jinho Kang, Taero Kim, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Ensembling Diverse Pre-trained Models for Domain Generalization in  Domain Shifted Task. PRL 2023.
+[arXiv]() [OpenReview]() 
 
 If you make use of the code/experiment in your work, please cite our paper (Bibtex below).
 
 ```
-@inproceedings{
-hu2020pretraining,
-title={Strategies for Pre-training Graph Neural Networks},
-author={Hu, Weihua and Liu, Bowen and Gomes, Joseph and Zitnik, Marinka and Liang, Percy and Pande, Vijay and Leskovec, Jure},
-booktitle={International Conference on Learning Representations},
-year={2020},
-url={https://openreview.net/forum?id=HJlWWJSFDH},
-}
+Bibtex here
 ```
 
 ## Installation
-We used the following Python packages for core development. We tested on `Python 3.7`.
+We used the following Python packages for core development. We tested on `Python 3.8.15`.
 ```
-pytorch                   1.0.1
-torch-cluster             1.2.4              
-torch-geometric           1.0.3
-torch-scatter             1.1.2 
-torch-sparse              0.2.4
-torch-spline-conv         1.0.6
-rdkit                     2019.03.1.0
-tqdm                      4.31.1
-tensorboardx              1.6
+pytorch                   1.1.0
+torch-cluster             1.6.0             
+torch-geometric           2.2.0
+torch-scatter             2.0.9
+torch-sparse              0.6.13
+torch-spline-conv         1.2.1
+rdkit                     2022.9.3
+tqdm                      4.62.3
+tensorboardx              2.5.1
 ```
 
 ## Dataset download
 All the necessary data files can be downloaded from the following links.
 
-For the chemistry dataset, download from [chem data](http://snap.stanford.edu/gnn-pretrain/data/chem_dataset.zip) (2.5GB), unzip it, and put it under `chem/`.
-For the biology dataset, download from [bio data](http://snap.stanford.edu/gnn-pretrain/data/bio_dataset.zip) (2GB), unzip it, and put it under `bio/`.
+download from [chem data](http://snap.stanford.edu/gnn-pretrain/data/chem_dataset.zip) (2.5GB), unzip it, and put it under `dataset/`.
 
 ## Pre-training and fine-tuning
 In each directory, we have three kinds of files used to train GNNs.
