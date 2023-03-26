@@ -30,7 +30,7 @@ All the necessary data files can be downloaded from the following links.
 
 download from [chem data](http://snap.stanford.edu/gnn-pretrain/data/chem_dataset.zip) (2.5GB), unzip it, and put it under `dataset/`.
 
-## Pre-training and fine-tuning
+## Model Bibimbap strategy
 In each directory, we have three kinds of files used to train GNNs.
 
 #### 1. Self-supervised pre-training
@@ -40,6 +40,8 @@ python pretrain_masking.py --output_model_file OUTPUT_MODEL_PATH
 python pretrain_edgepred.py --output_model_file OUTPUT_MODEL_PATH
 python pretrain_deepgraphinfomax.py --output_model_file OUTPUT_MODEL_PATH
 ```
+#### 1. Load pre-trained model and fine-tune
+Under 'model_gin/', there are pre-trained models that are trained in different ways. 
 This will save the resulting pre-trained model to `OUTPUT_MODEL_PATH`.
 
 #### 2. Supervised pre-training
