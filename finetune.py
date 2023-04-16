@@ -23,7 +23,6 @@ import os
 import shutil
 
 from tensorboardX import SummaryWriter
-from notify import send_msg
 from torch.distributions.dirichlet import Dirichlet
 criterion = nn.BCEWithLogitsLoss(reduction = "none")
 from rdkit import Chem
@@ -108,11 +107,11 @@ def model_bibimbap(model, averaging_target, averaging_aux ,model_ver, model_weig
         #for ensembling bunch of auxiliary models, we made rule for args.filename and load the saved model that we need
         #you should write specific path with your work directory
         if model_ver.endswith("nfr"):
-            checkpoints.append(torch.load(f'INPUT_PATH_HERE/{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
+            checkpoints.append(torch.load(f'./runs/finetune_cls_runseed0/_target_{averaging_target}_aux_{aux}__500/best_model.pth')['model_state_dict'])
         else:
-            checkpoints.append(torch.load(f'INPUT_PATH_HERE/target_{averaging_target}_aux_{aux}_{model_ver}_500/best_model.pth')['model_state_dict'])
+            checkpoints.append(torch.load(f'./runs/finetune_cls_runseed0/_target_{averaging_target}_aux_{aux}__500/best_model.pth')['model_state_dict'])
     #target model 
-    checkpoints.append(torch.load(f'/disk/bubble3jh/DomainBed/pretrain-gnns/chem/runs/finetune_cls_runseed0/freeze_bn/{averaging_target}_500/best_model.pth')['model_state_dict'])
+    checkpoints.append(torch.load(f'./runs/finetune_cls_runseed0/_{averaging_target}_fbn_500/best_model.pth')['model_state_dict'])
     temp = dict.fromkeys(checkpoints[0].keys(),0)
     
     for i, checkpoint in enumerate(checkpoints):
@@ -235,20 +234,21 @@ def main():
             checkpoint = torch.load(args.input_model_file)['model_state_dict']
             ft_pt = {key.replace('gnn.', ''): checkpoint.copy().pop(key) for key in checkpoint.keys()}
             gnn_pt = {key: value for key, value in ft_pt.copy().items() if key != "graph_pred_linear.weight" and key != "graph_pred_linear.bias"}
-            lp_checkpoint = torch.load(args.replace_classifier)
+            lp_checkpoint = torch.load(args.replace_classifier)['model_state_dict']
             lp_pt = {key.replace('graph_pred_linear.', ''): lp_checkpoint.copy().pop(key) for key in lp_checkpoint.keys()}
             lnr_pt = {key: value for key, value in lp_pt.copy().items() if key == "weight" or key == "bias"}
             
             model.gnn.load_state_dict(gnn_pt)
             model.graph_pred_linear.load_state_dict(lnr_pt)
         else:
-            #first finetuning for pre-trained model
-            # model.from_pretrained(args.input_model_file) 
-
-            #loading model from Save_best_model function
-            model.load_state_dict(torch.load(args.input_model_file)) #best model
+            try:
+                #loading model from Save_best_model function
+                model.load_state_dict(torch.load(args.input_model_file)) #best model
+            except:
+                #first finetuning for pre-trained model
+                model.from_pretrained(args.input_model_file) 
     if not args.averaging_aux == "":
-        if args.ensemble_method=="uniform":
+        if args.ensemble_method=="uniform"  and args.ens_weight == None:
             # model weight qeual 1/|M| 
             model_z = torch.ones(len(args.averaging_aux)+1, requires_grad = False)
             model_weight = softmax(model_z)
@@ -288,7 +288,7 @@ def main():
     test_acc_list = []
 
     
-    if args.freeze_bn and args.replace_classifier=="":
+    if args.freeze_bn :
         args.filename = "_fbn" + args.filename
     if args.freeze_gnn:
         args.filename = "_fgnn" + args.filename
@@ -298,11 +298,11 @@ def main():
         args.filename = "_" + args.model_ver  + args.filename
     if args.replace_classifier=="":
         args.filename = "_" +args.dataset  +args.filename
-    if args.averaging_target:
-        args.filename =  "recycling" + args.filename 
+    if args.averaging_aux != "":
+        args.filename =  "bibimbap" + args.filename 
 
     fname = 'runs/finetune_cls_runseed' + str(args.runseed) + '/' + args.filename + "_" + str(args.epochs)
-    if not args.ensemble_method=="average":
+    if not args.ensemble_method=="uniform" and args.averaging_aux != "":
         fname = fname + "_" + str(model_weight[0].item())
     print(f"saving model to : [{fname}]")
     #delete the directory if there exists one
