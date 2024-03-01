@@ -3,7 +3,7 @@
 
 This is a Pytorch implementation of the following paper: 
 
-Jinho Kang, Taero Kim, Yewon Kim, Changdae Oh, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Ensembling Diverse Pre-trained Models for Domain Generalization in  Domain Shifted Task. Pattern Recognition 2024.
+Jinho Kang, Taero Kim, Yewon Kim, Changdae Oh, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Pre-trained models ensemble for Domain Generalization. Pattern Recognition 2024.
 [arXiv]()
 
 If you make use of the code/experiment in your work, please cite our paper (Bibtex below).
