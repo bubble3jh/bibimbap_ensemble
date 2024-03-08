@@ -3,8 +3,8 @@
 
 This is a Pytorch implementation of the following paper: 
 
-Jinho Kang, Taero Kim, Yewon Kim, Changdae Oh, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Pre-trained models ensemble for Domain Generalization. Pattern Recognition 2024.
-[Link](https://www.sciencedirect.com/science/article/pii/S0031320324001420?dgcid=coauthor)
+Jinho Kang, Taero Kim, Yewon Kim, Changdae Oh, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Pre-trained models ensemble for Domain Generalization. [Pattern Recognition](https://www.sciencedirect.com/science/article/pii/S0031320324001420?dgcid=coauthor), 2024.
+
 
 If you make use of the code/experiment in your work, please cite our paper (Bibtex below).
 
