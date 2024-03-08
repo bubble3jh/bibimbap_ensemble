@@ -26,7 +26,7 @@ abstract = {This paper addresses a machine learning problem often challenged by 
 
 ## Motivation
 
-When employing ensemble methods like our Bibimbap and Ratatouille models, a key challenge is the potential inconsistency in loss landscapes across different models, leading to suboptimal ensemble performance, especially when dealing with significant domain shifts. The toy illustration (Fig. 1) and loss interpolation plot for chemical data (Fig. 2) highlight the existence of loss barriers that can arise due to these inconsistencies, emphasizing the need for innovative approaches to mitigate such challenges.
+When employing ensemble methods like our Bibimbap and [Ratatouille models](https://github.com/facebookresearch/ModelRatatouille), a key challenge is the potential inconsistency in loss landscapes across different models, leading to suboptimal ensemble performance, especially when dealing with significant domain shifts. The toy illustration (Fig. 1) and loss interpolation plot for chemical data (Fig. 2) highlight the existence of loss barriers that can arise due to these inconsistencies, emphasizing the need for innovative approaches to mitigate such challenges.
 
 ![Toy Illustration](figures/illustration.png)
 
