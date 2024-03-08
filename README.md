@@ -4,12 +4,24 @@
 This is a Pytorch implementation of the following paper: 
 
 Jinho Kang, Taero Kim, Yewon Kim, Changdae Oh, Jiyoung Jung, Rakwoo Chang, Kyungwoo Song. Bibimbap : Pre-trained models ensemble for Domain Generalization. Pattern Recognition 2024.
-[arXiv]()
+[Link](https://www.sciencedirect.com/science/article/pii/S0031320324001420?dgcid=coauthor)
 
 If you make use of the code/experiment in your work, please cite our paper (Bibtex below).
 
 ```
-Bibtex here
+@article{KANG2024110391,
+title = {Bibimbap : Pre-trained models ensemble for Domain Generalization},
+journal = {Pattern Recognition},
+volume = {151},
+pages = {110391},
+year = {2024},
+issn = {0031-3203},
+doi = {https://doi.org/10.1016/j.patcog.2024.110391},
+url = {https://www.sciencedirect.com/science/article/pii/S0031320324001420},
+author = {Jinho Kang and Taero Kim and Yewon Kim and Changdae Oh and Jiyoung Jung and Rakwoo Chang and Kyungwoo Song},
+keywords = {Transfer learning, Molecular classification, Domain generalization, Weight averaging, Ensemble learning, Chemical dataset},
+abstract = {This paper addresses a machine learning problem often challenged by differences in the distributions of training and real-world data. We propose a framework that addresses the problem of underfitting in the ensembling method using pre-trained models and improves the performance and robustness of deep learning models through ensemble diversity. For the naive weight ensembling framework, we discovered that the ensembled models could not lie in the same loss basin under extreme domain shift conditions, suggesting that a loss barrier may exist. We used a fine-tuning step after the weighted ensemble to address the underfitting problem caused by the loss barrier and stabilize the batch normalization running parameters. We also inferred through qualitative analysis that the diversity of ensemble models affects domain generalization. We validate our method on a large-scale image dataset (ImageNet-1K) and chemical molecule data, which is suitable for testing with domain shift problems due to its data-splitting method.}
+}
 ```
 
 ## Installation
