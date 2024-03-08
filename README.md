@@ -92,13 +92,16 @@ python finetune.py --averaging_target DATASET --dataset DATASET --averaging_aux 
 
 `DATASET` should be target dataset, and `AUX_MODELS` should be auxiliary model's names. We added `model_ver` argument parameter for find auxiliary model's directory more easier.
 
+At this stage, we tried a combination of `--freeze_gnn` freezing the features, `--freeze_lc` freezing the classifier, and `--freeze_bn` to find a best performing model for each dataset with hyperparameter tuning.
+
+Furthermroe, we can select ensemble method with `--ensemble_method uniform` or `--ensemble_method dirichelt` and can select ensemble weight manualy with `ens_weight` argument.
+
+
+## Qualitative analysis
+
 ![Underfitting](figures/auroc.png)
 
 **Fig. 3**: Measurement of AUROC under auxiliary fine-tuning, demonstrating the effectiveness of our approach in mitigating the identified challenges. The top plot shows the train stage, and the bottom plot shows the test stage. The transparent graphs represent the auxiliary models for the Bibimbap ensemble.
 
 The "Bibimbap without Fine-tuning" graph initially shows a significantly lower AUROC in the train stage, indicating an underfitting state. However, after applying our proposed fine-tuning approach, both the train and test plots exhibit a considerable increase in AUROC, highlighting the model's improved performance and ability to overcome the loss barrier challenges.
 
-
-At this stage, we tried a combination of `--freeze_gnn` freezing the features, `--freeze_lc` freezing the classifier, and `--freeze_bn` to find a best performing model for each dataset with hyperparameter tuning.
-
-Furthermroe, we can select ensemble method with `--ensemble_method uniform` or `--ensemble_method dirichelt` and can select ensemble weight manualy with `ens_weight` argument.
