@@ -1,5 +1,5 @@
 # Model Bibimbap Ensemble Framework
-![image](https://github.com/bubble3jh/bibimbap_ensemble/assets/56244967/b4d585b7-7bd5-4af3-8e38-760377c66d97)
+![flowchart](/figures/flowchart.png)
 
 This is a Pytorch implementation of the following paper: 
 
